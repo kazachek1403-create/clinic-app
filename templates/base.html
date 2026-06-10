@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Платформа управления клиниками{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.10/index.global.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@6.1.10/index.global.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@fullcalendar/timegrid@6.1.10/index.global.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --bs-primary: #0d6efd;
+            --bs-secondary: #6c757d;
+            --bs-success: #198754;
+            --bs-danger: #dc3545;
+            --bs-warning: #ffc107;
+            --bs-info: #0dcaf0;
+        }
+        body { min-height: 100vh; background-color: #f8f9fa; }
+        .navbar { box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .sidebar {
+            position: fixed;
+            top: 56px;
+            left: 0;
+            width: 250px;
+            height: calc(100vh - 56px);
+            background: white;
+            border-right: 1px solid #dee2e6;
+            overflow-y: auto;
+        }
+        .main-content {
+            margin-left: 250px;
+            padding: 20px;
+            min-height: calc(100vh - 56px);
+        }
+        .card {
+            border: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+        .table-striped > tbody > tr:nth-of-type(odd) {
+            background-color: rgba(0, 0, 0, 0.02);
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{% if current_user.role == 'admin' %}{{ url_for('admin_dashboard') }}{% elif current_user.role == 'seller' %}{{ url_for('seller_dashboard') }}{% else %}{{ url_for('login') }}{% endif %}">🏥 Клиники</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <span class="nav-link text-white">👤 {{ current_user.username }} ({% if current_user.role == 'admin' %}Администратор{% else %}Продавец{% endif %})</span>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('logout') }}">Выход</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="d-flex">
+        {% if current_user.is_authenticated %}
+        <nav class="sidebar p-3">
+            {% if current_user.role == 'admin' %}
+            <div class="list-group list-group-flush">
+                <a href="{{ url_for('admin_dashboard') }}" class="list-group-item list-group-item-action {% if request.endpoint == 'admin_dashboard' %}active{% endif %}">📊 Дашборд</a>
+                <a href="{{ url_for('admin_products') }}" class="list-group-item list-group-item-action {% if request.endpoint in ['admin_products', 'admin_product_new', 'admin_product_edit', 'admin_product_delete'] %}active{% endif %}">📦 Продукты</a>
+                <a href="{{ url_for('admin_assign_products') }}" class="list-group-item list-group-item-action {% if request.endpoint == 'admin_assign_products' %}active{% endif %}">🎯 Назначение продуктов</a>
+                <a href="{{ url_for('admin_users') }}" class="list-group-item list-group-item-action {% if request.endpoint in ['admin_users', 'admin_user_new', 'admin_user_edit', 'admin_user_delete'] %}active{% endif %}">👥 Пользователи</a>
+                <a href="{{ url_for('admin_authorizations') }}" class="list-group-item list-group-item-action {% if request.endpoint in ['admin_authorizations', 'admin_auth_approve', 'admin_auth_reject'] %}active{% endif %}">✅ Заявки</a>
+                <a href="{{ url_for('admin_materials') }}" class="list-group-item list-group-item-action {% if request.endpoint in ['admin_materials', 'admin_material_upload', 'admin_material_delete'] %}active{% endif %}">📄 Материалы</a>
+                <a href="{{ url_for('admin_documents') }}" class="list-group-item list-group-item-action {% if request.endpoint in ['admin_documents', 'admin_document_upload', 'admin_document_delete'] %}active{% endif %}">📋 Документы</a>
+                <a href="{{ url_for('admin_exchange_rate') }}" class="list-group-item list-group-item-action {% if request.endpoint == 'admin_exchange_rate' %}active{% endif %}">💱 Курс валюты</a>
+                <a href="{{ url_for('admin_calendar') }}" class="list-group-item list-group-item-action {% if request.endpoint == 'admin_calendar' %}active{% endif %}">📅 Календарь</a>
+                <a href="{{ url_for('admin_email_settings') }}" class="list-group-item list-group-item-action {% if request.endpoint in ['admin_email_settings', 'admin_email_test'] %}active{% endif %}">📧 Почта</a>
+            </div>
+            {% elif current_user.role == 'seller' %}
+            <div class="list-group list-group-flush">
+                <a href="{{ url_for('seller_dashboard') }}" class="list-group-item list-group-item-action {% if request.endpoint == 'seller_dashboard' %}active{% endif %}">📊 Дашборд</a>
+                <a href="{{ url_for('seller_calendar') }}" class="list-group-item list-group-item-action {% if request.endpoint == 'seller_calendar' %}active{% endif %}">📅 Календарь</a>
+                <a href="{{ url_for('seller_materials') }}" class="list-group-item list-group-item-action {% if request.endpoint in ['seller_materials', 'seller_material_download'] %}active{% endif %}">📄 Материалы</a>
+                <a href="{{ url_for('seller_documents') }}" class="list-group-item list-group-item-action {% if request.endpoint in ['seller_documents', 'seller_document_download'] %}active{% endif %}">📋 Мои документы</a>
+            </div>
+            {% endif %}
+        </nav>
+
+        <main class="main-content flex-grow-1">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                    <div class="alert alert-{% if category == 'danger' %}danger{% elif category == 'warning' %}warning{% elif category == 'success' %}success{% else %}info{% endif %} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            {% block content %}{% endblock %}
+        </main>
+        {% endif %}
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.10/index.global.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@6.1.10/index.global.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/timegrid@6.1.10/index.global.min.js"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
